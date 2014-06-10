@@ -72,7 +72,7 @@ Dialog::Dialog()
 
     mainLayout->addWidget(formGroupBox); //! Ввод данных
     mainLayout->addWidget(caseCombo);    //! Выбор разрешения
-    mainLayout->addWidget(caseCheckBox);
+    mainLayout->addWidget(caseCheckBox); //! Сохранить параметры экрана
     mainLayout->addWidget(buttonBox);    //! Кноки
 
     setLayout(mainLayout);
