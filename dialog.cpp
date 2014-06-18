@@ -67,6 +67,9 @@ Dialog::Dialog()
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(romik()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reboot()));
     connect(caseCombo, SIGNAL(activated(int)), this, SLOT(changeCase(int)));
+    connect(caseCheckBox, SIGNAL(stateChanged(int)), this, SLOT(saveDisplay(int)));
+
+    if (caseCheckBox->isChecked()) { }
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
 
@@ -83,9 +86,37 @@ Dialog::Dialog()
 
 void Dialog::changeCase(int comboIndex) {
 
+/*
+    if (caseCheckBox->isChecked()) {
+        settings->setValue("section/display","yes");
+    } else {
+        settings->setValue("section/display","no");
+    }
+
+*/
+    QSettings *settings = new QSettings("disp_settings.conf",QSettings::NativeFormat);
+    settings->setValue("section/mode",caseCombo->itemData(comboIndex).toString().split(" ")[0]);
+    settings->sync();
+
     QProcess process;
     process.startDetached("/usr/bin/-xrandr -s "+caseCombo->itemData(comboIndex).toString().split(" ")[0]);
     process.waitForFinished(-1);
+
+}
+
+void Dialog::saveDisplay(int statUS) {
+
+      QSettings *settings = new QSettings("disp_settings.conf",QSettings::NativeFormat);
+
+      if (statUS == Qt::Unchecked) {  //! Запрещяем изменять режим монитора
+       caseCombo->setDisabled(false);
+       settings->setValue("section/display","no");
+      } else {
+       caseCombo->setDisabled(true);
+       settings->setValue("section/display","yes");
+      }
+
+       settings->sync();
 
 }
 
@@ -109,6 +140,12 @@ void Dialog::reboot() {
 void Dialog::romik() {
 
     QSettings *settings = new QSettings("settings.conf",QSettings::NativeFormat);
+
+    if (caseCheckBox->isChecked()) {
+        settings->setValue("section/display","yes");
+    } else {
+        settings->setValue("section/display","no");
+    }
 
     settings->setValue("section/login",Username->text());
     settings->setValue("section/server", ipAddress->text());
@@ -149,6 +186,9 @@ void Dialog::createXrandr() {
         }
 
      caseCombo->setCurrentIndex(pos);
+     QSettings *settings = new QSettings("disp_settings.conf",QSettings::NativeFormat);
+     settings->setValue("section/mode",caseCombo->itemData(pos).toString().split(" ")[0]);
+     settings->sync();
 
 }
 

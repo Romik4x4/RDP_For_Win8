@@ -75,6 +75,8 @@ private slots:
      void romik();
      void changeCase(int);
      void reboot();
+     void saveDisplay(int);
+
 
 private:
 
