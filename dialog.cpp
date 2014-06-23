@@ -52,12 +52,25 @@ QString base64_decode(QString string);
 Dialog::Dialog()
 {
 
+
+    QSettings *settings = new QSettings("disp_settings.conf",QSettings::NativeFormat);
+
+    if (settings->value("section/mode").toString() != NULL) {
+     if (settings->value("section/display").toString() == "yes") {
+         QProcess process;
+         process.startDetached("/usr/bin/-xrandr -s "+settings->value("section/mode").toString());
+         process.waitForFinished(-1);
+    }
+    }
+
+
     QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
 
     createFormGroupBox();
-    createXrandr();
 
     caseCheckBox = new QCheckBox(tr("Запомнить параметры экрана"));
+
+    createXrandr();
 
     reb = new QPushButton(tr("Выключить"),this);
 
@@ -167,6 +180,7 @@ void Dialog::createXrandr() {
     process.start("/usr/bin/xrandr");
     process.waitForReadyRead();
     process.waitForFinished();
+
     QByteArray xmode = process.readAllStandardOutput();
 
     QList<QByteArray> list;
@@ -186,8 +200,27 @@ void Dialog::createXrandr() {
         }
 
      caseCombo->setCurrentIndex(pos);
+
      QSettings *settings = new QSettings("disp_settings.conf",QSettings::NativeFormat);
-     settings->setValue("section/mode",caseCombo->itemData(pos).toString().split(" ")[0]);
+
+     if (settings->value("section/mode").toString() == NULL) { //! Создаем если нет ничего
+       settings->setValue("section/mode",caseCombo->itemData(pos).toString().split(" ")[0]);
+     }
+
+     if (settings->value("section/display").toString() == NULL) { //! Создаем если нет ничего
+       settings->setValue("section/display","no");
+     }
+
+     if (settings->value("section/display").toString() == "no") {
+         caseCombo->setDisabled(false);
+         caseCheckBox->setCheckState(Qt::Unchecked);
+     }
+
+     if (settings->value("section/display").toString() == "yes") {
+         caseCombo->setDisabled(true);
+         caseCheckBox->setCheckState(Qt::Checked);
+     }
+
      settings->sync();
 
 }
@@ -201,7 +234,7 @@ void Dialog::createFormGroupBox()
     for (int i = 0; i < ipAddressesList.size(); i++)
     {
       if (ipAddressesList.at(i).toIPv4Address() && ipAddressesList.at(i).toString() != "127.0.0.1")
-             xipAddress = ipAddressesList.at(i).toString();
+       xipAddress = ipAddressesList.at(i).toString();
     }
 
 
