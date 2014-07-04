@@ -76,6 +76,7 @@ private slots:
      void changeCase(int);
      void reboot();
      void saveDisplay(int);
+     void radmin();
 
 
 private:
@@ -87,6 +88,7 @@ private:
     enum { NumGridRows = 3, NumButtons = 4 };
 
     QPushButton *reb;
+    QPushButton *admin;
     QComboBox *caseCombo;
     QMenuBar *menuBar;
     QGroupBox *horizontalGroupBox;

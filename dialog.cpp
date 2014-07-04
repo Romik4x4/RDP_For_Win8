@@ -52,15 +52,25 @@ QString base64_decode(QString string);
 Dialog::Dialog()
 {
 
+    QSettings *Msettings = new QSettings("main_settings.conf",QSettings::NativeFormat);
+    if (Msettings->value("section/cmd").toString() == NULL) {
+        Msettings->setValue("section/cmd",
+                            "sudo /usr/bin/xfreerdp --plugin rdpsnd --data alsa -- --plugin drdynvc --data audin -- --plugin rdpdr --data disk:usb-flash:/media/ -- --sec rdp -f -x lan");
+
+        Msettings->sync();
+    }
+
 
     QSettings *settings = new QSettings("disp_settings.conf",QSettings::NativeFormat);
 
     if (settings->value("section/mode").toString() != NULL) {
-     if (settings->value("section/display").toString() == "yes") {
+
+        if (settings->value("section/display").toString() == "yes") {
          QProcess process;
          process.startDetached("/usr/bin/-xrandr -s "+settings->value("section/mode").toString());
          process.waitForFinished(-1);
-    }
+        }
+
     }
 
 
@@ -73,12 +83,18 @@ Dialog::Dialog()
     createXrandr();
 
     reb = new QPushButton(tr("Выключить"),this);
+    admin = new QPushButton(tr("Админ"),this);
 
     buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok);
-    buttonBox->addButton(reb,QDialogButtonBox::RejectRole);
 
+    buttonBox->addButton(reb,QDialogButtonBox::RejectRole);
+    buttonBox->addButton(admin,QDialogButtonBox::HelpRole);
+
+
+    connect(buttonBox, SIGNAL(helpRequested()), this, SLOT(radmin()));
     connect(buttonBox, SIGNAL(accepted()), this, SLOT(romik()));
     connect(buttonBox, SIGNAL(rejected()), this, SLOT(reboot()));
+
     connect(caseCombo, SIGNAL(activated(int)), this, SLOT(changeCase(int)));
     connect(caseCheckBox, SIGNAL(stateChanged(int)), this, SLOT(saveDisplay(int)));
 
@@ -165,10 +181,37 @@ void Dialog::romik() {
     settings->setValue("section/password", base64_encode(Pass->text()));
     settings->sync();
 
+    //! Параметры запуска FreeRDP
+
+    QSettings *Msettings = new QSettings("main_settings.conf",QSettings::NativeFormat);
+//! Msettings->value("section/cmd").toString()+"
     QProcess process;
-    process.start("/usr/bin/xfreerdp --sec rdp -f -x lan -p "+Pass->text()+" -u "+Username->text()+" "+ipAddress->text());
+    qDebug() << Msettings->value("section/cmd").toString().trimmed()+" -p "+Pass->text()+" -u "+Username->text()+" "+ipAddress->text();
+    process.start(Msettings->value("section/cmd").toString().trimmed()+" -p "+Pass->text()+" -u "+Username->text()+" "+ipAddress->text());
     process.waitForFinished(-1);
     accept();
+
+}
+
+void Dialog::radmin() {
+
+        QSettings *settings = new QSettings("settings.conf",QSettings::NativeFormat);
+
+        if (caseCheckBox->isChecked()) {
+            settings->setValue("section/display","yes");
+        } else {
+            settings->setValue("section/display","no");
+        }
+
+        settings->setValue("section/login",Username->text());
+        settings->setValue("section/server", ipAddress->text());
+        settings->setValue("section/password", base64_encode(Pass->text()));
+        settings->sync();
+
+        QProcess process;
+        process.start("/usr/local/bin/rdesktop -f -x lan -p "+Pass->text()+" -u "+Username->text()+" "+ipAddress->text());
+        process.waitForFinished(-1);
+        accept();
 
 }
 
